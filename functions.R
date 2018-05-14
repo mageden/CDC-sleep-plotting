@@ -118,8 +118,9 @@ theme_map <- theme_bw() +
           legend.position = c(.95, .2),
           #legend.title = element_text(size = 14, face="bold"),
           legend.text = element_text(size = 12),
-          legend.title = element_blank())
-# Function
+          legend.title = element_blank(),
+          plot.title = element_text(size = 10))
+# Functinotitl
 geoplot_cont <- function(dat, fill, distiller.palette = "Spectral",level="county") {
     if(!level %in% c("state", "county")) {stop("Level must be state or COunty.")}
     state.df <- map_data("state")

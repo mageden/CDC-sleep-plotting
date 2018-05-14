@@ -6,8 +6,8 @@ output:
     fig_caption: FALSE
     latex_engine: pdflatex
 author: Michael Geden
-title: "Exploration of County-level Variation in Sleep Deprivation"
-abstract: "This document provides an introduction to R Markdown, argues for its..."
+title: "Challenges in the Visualization of Sleep Deprivation across the US"
+abstract: "Sleep deprivation is a wide-spread public health issue in the United States and many other countries. Rising awareness of the issue has led to large-scale epidemiological efforts to measure the prevalance and cost of the issue. Visualization of this information is crucial for informing policy and planning targeted interventions to populations in need, however, visualizing the data often involves a large number of decisions on the preprocessing of the data which can influence the conclusions made. This brief report touches on a few of these challenges, and provides some recommendations for transparency. "
 geometry: margin=1in
 sansfont: Calibri Light
 fontsize: 11pt
@@ -149,36 +149,36 @@ theme_map <- theme_bw() +
 
 # Introduction
 
-Approximately 1/3 of the population of the United States reports having less sleep on average than the recommended 7 hours a night (@cdc_2016; @liu_2016]. Chronic sleep deprivation is considered a serious public health issue, as insufficient sleep is associated with increased workplace related accidents [@dinges_1995; @rosekind_2010], obesity [@gang_2005; @knutson_2004], drowsy driving [@horne_1995; @howard_2004], cardiovascular disease [@ayas_2003; @mullington_2009], and a variety of other risks/conditions. One proposed explanation for some of these costs is the detriment to decision making [] and sustained attention [] that come with sleep deprivation. 
+Approximately 1/3 of the population of the United States reports having less sleep on average than the recommended 7 hours a night [@cdc_2011; @liu_2016]. Chronic sleep deprivation is considered a serious public health issue, as insufficient sleep is associated with increased workplace related accidents [@dinges_1995; @rosekind_2010], obesity [@gang_2005; @knutson_2004], drowsy driving [@horne_1995; @howard_2004], cardiovascular disease [@ayas_2003; @mullington_2009], and a variety of other risks/conditions. Sleep deprivation is also correlated with decreased decision making [@harrison_2000] and sustained attention [@lim_2008], which may provide one explanation for some of the associated behavioral detriments. 
 
+There have been sizable efforts on the part of the Centers for Disease Control (CDC) and National Sleep Foundation (NSF) to better understand the prevalance and costs of sleep deprivation through large-scale surveys across the United States. These surveys provide critical information for future policy and planning targeted interventions, and have led to some preliminary suggestions including employers tailoring shift-systems design [@cdc_2012], greater involvement by health-care providers [@cdc_2009], limiting active technology use before sleep [@gradisar_2013], and general increased public awareness of sleep deprivation. 
 
-
-
-This distinction does not take into account whether the sleep deprived days were contingent [@grandner_2015], an improtant factor in chronic partial sleep deprivation, adding additional uncertainty on the
-interpretation of moderate values in which either continuguous or non-continguous days would be
-possible. A concern with this method is that it is reliant on a relatively long-term retrospective
-self-report, in which participants must remember the number of days that they slept well within
-that duration. This is additionally confounded with the fact that the number of hours an individual
-needs to feel well-rested depents on a large number of factors, so that we are combining the accuracy
-of the self-report, the
+Communicating complex spatial data, such as nation-wide polls, requires a number of decisions and pre-processing steps before creating the final visualizations. This preliminary work can have large effects on the final product, leading to potentially different conclusions. The purpose of this brief report is to outline some practices which would help improve the transparency and clarity of the final report employing these visualizations. 
 
 # Data
 
-### BRFSS 2009
+For this brief report we will the 2009 Behavioral Risk Factor Surveillance System (BRFSS) results collected by the CDC. The BRFSS is a yearly survey intended to measure health related behaviors and demographics such as tobacco use, seatbelt use, sleep related habits, etc. The 2009 BRFSS was collected through landlines only, with cellphones being added in 2011 to the survey sample. A total of 432,607 records were collected in this data set across 2231 of the total 3109 counties in the contiguous United States. The sleep related question that will be used here is presented below;
 
 - “During the past 30 days, for about how many days have you felt you did not get enough rest or sleep? (number of days)”
+- Response Options:
+    - 0-30 days
+    - Refuse to respond
+    - Don't know
+    - Missing  / Not asked
 
-### BRFSS 2016
+This dataset and question were selected due to their use in @grandner_2015, which will allow for some conrete discussion points and comparisons. The responses to this question were dichotomized, with participants reporting greater than 14 days of insufficient sleep being categorized as sleep deprived. This cutoff was chosen based on its use in previous research [@grandner_2015; @strine_2005] and the practical significance of it found in @edinger_2011. 
 
-- “On average, how many hours of sleep do you get in a 24-hour period?”
+# Challenges 
 
-## Response Rates
+## Sample Size
+
+[@grandner_2015] Didn't discuss this, and many of the regions with high quintile were also the regions in which there was limited data
 
 ```{r echo = FALSE}
 # State data used for state boundaries
 state.df <- map_data("state")
 sleep_2009$n.binom <- ifelse(sleep_2009$n<31, 1, 0)
-p1 <- ggplot(sleep_2009, aes(x=long, y=lat, group=polyname, fill=n.binom)) +
+ggplot(sleep_2009, aes(x=long, y=lat, group=polyname, fill=n.binom)) +
     geom_polygon(data = state.df, aes(x=long, y = lat, group = group),
                  color = NA, size = .6, fill = "grey") + # Make background grey
     geom_polygon(data = sleep_2009, aes(x=long, y=lat, group=polyname, fill=n.binom),
@@ -194,22 +194,15 @@ p1 <- ggplot(sleep_2009, aes(x=long, y=lat, group=polyname, fill=n.binom)) +
     theme(legend.position = "none")
 ```
 
+## Missing Data
+
+Important to address, and quite hard to. It would be good at the very least to look at the proportion of the missing data (excluding refusal) per county and the proportion of refused to respond per county
+
 ```{r echo = FALSE, fig.width = 8}
-p2 <- ggplot(sleep_2009, aes(x=long, y=lat, group=polyname, fill=prop.responded)) +
-    geom_polygon(color = "grey27", size = .1, linetype = 4)+
-    geom_polygon(data = state.df, aes(x=long, y = lat, group = group, fill = NA),
-                 color = "black", size = .6, fill = NA)+
-    #scale_fill_continuous(low = "white", high = "red")+
-    scale_fill_distiller(palette = "Spectral") + 
-    coord_map("albers", lat0=39, lat1=45,
-              xlim = c(-120, -73),
-              ylim = c(25.12993,49.38323)) +
-    ggtitle("Proportion of Responses") + 
-    theme_map
-gridExtra::grid.arrange(p1, p2, nrow = 1)
+
 ```
 
-## County: Continuous Proportion of Sleep Deprivation
+## Quintiles
 
 ```{r echo = FALSE}
 ggplot(sleep_2009, aes(x=long, y=lat, group=polyname, fill=prop)) +
@@ -220,10 +213,9 @@ ggplot(sleep_2009, aes(x=long, y=lat, group=polyname, fill=prop)) +
     coord_map("albers", lat0=39, lat1=45,
               xlim = c(-120, -73),
               ylim = c(25.12993,49.38323)) +
+    ggtitle("Continuous Proportion of Sleep Deprivation") +
     theme_map
 ```
-
-## Quintiles of Proportion of Sleep Deprivation
 
 ```{r echo = FALSE, fig.width = 8}
 # Plot
@@ -237,22 +229,22 @@ ggplot(sleep_2009, aes(x=long, y=lat, group=polyname, fill=discrete)) +
               xlim = c(-120, -73),
               ylim = c(25.12993,49.38323)) +
     scale_fill_brewer(palette="YlOrRd")+
+    ggtitle("Quintiles of Proportion of Sleep Deprivation") + 
     theme_map
 ```
 
-# Limitations
+## Adjusted Proportions
 
-## Age-Adjusted Proportions
+THIS NEEDS A LOT MORE IF GOIGN TO INCLUDE. MIGHT NOT HAVE THE TIME TO GO HAM ENOUGH
 
 State level could use asmyptotic normal confidence intervals, but the smaller sample sizes in the county level analysis would need to use an exact test or bootstrap estimate (provided moderate n, ~15-30). Given the presence of numerous other variables not controlled for, and the differences in sampling error for older populations vs. younger populations, simply using age-adjusted estimates would likely not be sufficients. Instead using a multilevel approach such as the one outlined in @zhang_2014
 
-## Missing Data
+## Transparency
 
-For the purposes of plotting here, very little data has been to account for the meaning behind the different kinds of missing data (lack of responses, didn't know the answer, refused to respond). These are important factors, and should definitely be investigated, but with the simple intent here of visualizing general trends for exploratory analyses this was considered sufficient. 
+All information used in creating the figures and analysis should be provided somewhere as well. For example, here I have used the same data and methodology as [@grandner_2015] for creating the quintile plot, yet have gotten a few sizable differences. This could be due to a variety of reasons, however without being able to compare code it is unclear whether this was due to a mistake on one of our parts, or a different decision in the preprocessing of the data that wasn't clearly described. 
 
-## Survey Stratification
+# Conclusion
 
-One important elemenet of these large scale surveyts is that the survey appropriately targets the samples of interest, whether that is the a specific subgroup or all relevant subgroups. Consideriing the proportion of missing data and relatively limited data, jumping into subgroup differences within the county level does not seem prudent. Instead, an analysis controling for differences between states/counties while looking at the reslationship of interest would be more appropriate. This is not covered here for brevity. 
 
 
 \pagebreak
