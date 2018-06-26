@@ -2,6 +2,10 @@
 # ==============================================================================
 # Extract Data from BRFSS and Pair with Coordinates
 # ==============================================================================
+# Only extracts 1 variable
+# Latlong: If you want the latitude and longitude coordinates
+# Reformat: Recode extraction variables BEFORE applying the function
+# Function: Whatever you want to apply by the relevant grouping
 BRFSS_geoextraction <- function(filepath, id = "county", position,
                                 extraction, contiguous=TRUE,latlong=TRUE,
                                 reformat = function(x) {x}, # Recode as NA for these values in extract
@@ -43,13 +47,13 @@ BRFSS_geoextraction <- function(filepath, id = "county", position,
         clear_labels(.)
     # Subset
     keep <- c(position, extraction)
-    keep.states <- if(contiguous) {
+    remove.states <- if(contiguous) {
         c(15, 2, 66, 72, 78)
     } else {c()}
     # Remove Excess
     data2 <- data %>%
         select(one_of(keep)) %>% # Select columns of interest
-        filter(!(!!rlang::sym(position[1])) %in% keep.states) %>% # Select States
+        filter(!(!!rlang::sym(position[1])) %in% remove.states) %>% # Select States
         filter(!(is.na(!!rlang::sym(position[1])))) # remove missing states
     if(id == "county"){
         data2 <- data2 %>%

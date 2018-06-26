@@ -24,10 +24,11 @@ sleep_2009_state <- BRFSS_geoextraction(filepath = filepath,
                                          position = position,
                                          extraction = extraction,
                                          id = "state",
-                                         reformat = QLREST2_format)
+                                         reformat = QLREST2_format,
+                                         latlong = FALSE)
 
 # ---- Save data ----
-save(file = "data/sleep_2016.rdata", sleep_2009_state, sleep_2009_county)
+save(file = "data/sleep_2009.rdata", sleep_2009_state, sleep_2009_county)
 
 # ------------ 2016 ------------
 # 2016 County Data
@@ -40,13 +41,25 @@ SLEPTIM_format <- function(x) {
     x
 }
 
-# 2016 State Data
+# 2016 Continuous
 position <- c("X.STATE")
-sleep_2016_state <- BRFSS_geoextraction(filepath = filepath,
+sleep_2016_cont <- BRFSS_geoextraction(filepath = filepath,
                                         position = position,
                                         extraction = extraction,
                                         id = "state",
-                                        reformat = SLEPTIM_format)
-
+                                        reformat = SLEPTIM_format,
+                                        latlong = FALSE)
+# Dichotimized
+SLEPTIM_format_dichot <- function(x) {
+    x[x>24] <- NA
+    x <- ifelse(x<7, 1, 0)
+    x
+}
+sleep_2016_dichot <- BRFSS_geoextraction(filepath = filepath,
+                                       position = position,
+                                       extraction = extraction,
+                                       id = "state",
+                                       reformat = SLEPTIM_format_dichot,
+                                       latlong = FALSE)
 # ---- Save data ----
-save(file = "data/sleep_2016.rdata", sleep_2016_state)
+save(file = "data/sleep_2016.rdata", sleep_2016_cont, sleep_2016_dichot)
